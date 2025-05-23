@@ -1,0 +1,26 @@
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017"
+    volumes:
+      - ./db/seed/init.js:/docker-entrypoint-initdb.d/init.js:ro
+    environment:
+      MONGO_INITDB_DATABASE: library
+
+  backend:
+    image: ${BACKEND_IMAGE}
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/library
+      - PORT=5000
+    ports:
+      - "5001:5000"
+
+  frontend:
+    image: ${FRONTEND_IMAGE}
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"

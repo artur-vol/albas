@@ -1,0 +1,42 @@
+.book-card {
+  width: 150px;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  margin: 8px;
+  box-shadow: 0 2px 8px #0001;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+  transition: box-shadow .2s;
+}
+.book-card:hover {
+  box-shadow: 0 6px 20px #0002;
+}
+.book-cover {
+  height: 200px;
+  background: #f3f3f3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.book-cover-placeholder {
+  width: 80%;
+  height: 80%;
+  background: linear-gradient(135deg, #bbb, #eee 80%);
+  border-radius: 4px;
+}
+.book-info {
+  padding: 12px 8px;
+  text-align: center;
+}
+.book-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.book-author {
+  font-size: 0.9rem;
+  color: #444;
+}
+

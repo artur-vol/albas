@@ -1,0 +1,54 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  DOCKER_HUB_USER: arturvol
+  REPO_NAME: albas
+  BACKEND_TAG: backend-latest
+  FRONTEND_TAG: frontend-latest
+  COMPOSE_FILE: docker-compose.test.yaml
+
+jobs:
+  build-test-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build Backend
+        run: docker build -t ${{ env.DOCKER_HUB_USER }}/${{ env.REPO_NAME }}:${{ env.BACKEND_TAG }} ./backend
+
+      - name: Build Frontend
+        run: docker build -t ${{ env.DOCKER_HUB_USER }}/${{ env.REPO_NAME }}:${{ env.FRONTEND_TAG }} ./frontend
+
+      - name: Raise Environment
+        run: |
+          docker compose -f ${{ env.COMPOSE_FILE }} -p albas-test-${{ github.run_number }} up -d
+          sleep 20
+          docker ps | grep albas-test-${{ github.run_number }}
+
+      - name: Run Tests
+        run: |
+          curl -f http://localhost:5001/api-docs/ || exit 1
+          curl -f http://localhost:3000 || exit 1
+
+      - name: Push to Docker Hub
+        run: |
+          docker push ${{ env.DOCKER_HUB_USER }}/${{ env.REPO_NAME }}:${{ env.BACKEND_TAG }}
+          docker push ${{ env.DOCKER_HUB_USER }}/${{ env.REPO_NAME }}:${{ env.FRONTEND_TAG }}
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose -f ${{ env.COMPOSE_FILE }} -p albas-test-${{ github.run_number }} down -v
+          docker rmi ${{ env.DOCKER_HUB_USER }}/${{ env.REPO_NAME }}:${{ env.BACKEND_TAG }} ${{ env.DOCKER_HUB_USER }}/${{ env.REPO_NAME }}:${{ env.FRONTEND_TAG }} || true
