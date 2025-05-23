@@ -1,0 +1,1188 @@
+openapi: 3.0.0
+info:
+  title: Library API
+  description: API для бібліотечної інформаційної системи
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:5001
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Реєстрація користувача
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [full_name, email, password, phone]
+              properties:
+                full_name: { type: string, example: Іван Петренко }
+                email: { type: string, format: email, example: user@example.com }
+                password: { type: string, format: password, example: secret123 }
+                phone: { type: string, example: "+380991234567" }
+      responses:
+        '201': { description: Користувача зареєстровано }
+        '400': { description: Користувач вже існує }
+        '500': { description: Помилка сервера }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Вхід користувача
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email, example: user@example.com }
+                password: { type: string, format: password, example: secret123 }
+      responses:
+        '200':
+          description: Успішна авторизація
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  role: { type: string, example: reader }
+        '400': { description: Невірна пошта або пароль }
+        '403': { description: Користувача заблоковано }
+        '500': { description: Помилка сервера }
+
+  /authors:
+    get:
+      tags: [Authors]
+      summary: Отримати всіх авторів
+      security: [ { bearerAuth: [] } ]
+      responses:
+        '200':
+          description: Список авторів
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Author' }
+        '401': { description: Неавторизований запит }
+
+    post:
+      tags: [Authors]
+      summary: Створити автора
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AuthorInput' }
+      responses:
+        '201': { description: Автор створений }
+        '400': { description: Помилка при створенні автора }
+        '401': { description: Неавторизований }
+        '403': { description: Заборонено }
+
+  /authors/{id}:
+    get:
+      tags: [Authors]
+      summary: Отримати автора за ID
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Дані про автора, content: { application/json: { schema: { $ref: '#/components/schemas/Author' } } } }
+        '404': { description: Автора не знайдено }
+        '400': { description: Некоректний ID }
+
+    patch:
+      tags: [Authors]
+      summary: Оновити автора
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AuthorInput' }
+      responses:
+        '200': { description: Автор оновлений }
+        '400': { description: Помилка при оновленні }
+        '404': { description: Автора не знайдено }
+
+    delete:
+      tags: [Authors]
+      summary: Видалити автора
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Автора видалено }
+        '404': { description: Автора не знайдено }
+        '400': { description: Помилка при видаленні }
+
+  /genres:
+    get:
+      tags: [Genres]
+      summary: Отримати всі жанри
+      security: [ { bearerAuth: [] } ]
+      responses:
+        '200':
+          description: Список жанрів
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Genre' }
+        '401': { description: Неавторизований запит }
+
+    post:
+      tags: [Genres]
+      summary: Створити новий жанр
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GenreInput' }
+      responses:
+        '201': { description: Жанр створено }
+        '400': { description: Помилка при створенні жанру }
+        '403': { description: Заборонено }
+
+  /genres/{id}:
+    get:
+      tags: [Genres]
+      summary: Отримати жанр за ID
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Жанр знайдено
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Genre' }
+        '404': { description: Жанр не знайдено }
+        '400': { description: Некоректний ID }
+
+    patch:
+      tags: [Genres]
+      summary: Оновити жанр
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GenreInput' }
+      responses:
+        '200': { description: Жанр оновлено }
+        '404': { description: Жанр не знайдено }
+        '400': { description: Помилка при оновленні жанру }
+
+    delete:
+      tags: [Genres]
+      summary: Видалити жанр
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Жанр видалено }
+        '404': { description: Жанр не знайдено }
+        '400': { description: Помилка при видаленні жанру }
+
+  /publishers:
+    get:
+      tags: [Publishers]
+      summary: Отримати всі видавництва
+      security: [ { bearerAuth: [] } ]
+      responses:
+        '200':
+          description: Список видавництв
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Publisher'
+        '401':
+          description: Неавторизований запит
+
+    post:
+      tags: [Publishers]
+      summary: Створити нове видавництво
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublisherInput'
+      responses:
+        '201':
+          description: Видавництво створено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publisher'
+        '400': { description: Помилка при створенні видавництва }
+        '403': { description: Заборонено }
+
+  /publishers/{id}:
+    get:
+      tags: [Publishers]
+      summary: Отримати видавництво за ID
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID видавництва
+      responses:
+        '200':
+          description: Видавництво знайдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publisher'
+        '404': { description: Видавництво не знайдено }
+        '400': { description: Некоректний ID видавництва }
+
+    patch:
+      tags: [Publishers]
+      summary: Оновити видавництво
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID видавництва
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublisherInput'
+      responses:
+        '200': { description: Видавництво оновлено }
+        '404': { description: Видавництво не знайдено }
+        '400': { description: Помилка при оновленні видавництва }
+
+    delete:
+      tags: [Publishers]
+      summary: Видалити видавництво
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID видавництва
+      responses:
+        '200': { description: Видавництво видалено }
+        '404': { description: Видавництво не знайдено }
+        '400': { description: Помилка при видаленні видавництва }
+
+  /books:
+    get:
+      tags: [Books]
+      summary: Отримати список книг
+      description: Повертає всі книги з можливістю фільтрації за назвою, автором, жанром, роками та доступністю.
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: query
+          name: title
+          schema: { type: string }
+          description: Частина назви книги
+        - in: query
+          name: author
+          schema: { type: string }
+          description: ID або частина імені автора
+        - in: query
+          name: genre
+          schema: { type: string }
+          description: ID жанру
+        - in: query
+          name: year_from
+          schema: { type: integer }
+          description: Рік видання від
+        - in: query
+          name: year_to
+          schema: { type: integer }
+          description: Рік видання до
+        - in: query
+          name: available
+          schema: { type: string, enum: ["true", "false"] }
+          description: Фільтр за доступністю
+      responses:
+        '200':
+          description: Список книг
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+        '400': { description: Помилка фільтрації }
+        '401': { description: Неавторизований }
+
+    post:
+      tags: [Books]
+      summary: Додати нову книгу
+      description: Доступно лише адміну. Створює новий запис книги в базі даних.
+      security: [ { bearerAuth: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookInput'
+      responses:
+        '201': { description: Книга додана }
+        '400': { description: Помилка при додаванні книги }
+        '403': { description: Заборонено }
+
+  /books/{id}:
+    get:
+      tags: [Books]
+      summary: Отримати книгу за ID
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID книги
+      responses:
+        '200':
+          description: Деталі книги
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '404': { description: Книгу не знайдено }
+        '400': { description: Некоректний ID }
+
+    patch:
+      tags: [Books]
+      summary: Оновити книгу
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID книги
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookInput'
+      responses:
+        '200': { description: Книгу оновлено }
+        '404': { description: Книгу не знайдено }
+        '400': { description: Помилка при оновленні }
+
+    delete:
+      tags: [Books]
+      summary: Видалити книгу
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID книги
+      responses:
+        '200': { description: Книгу видалено }
+        '404': { description: Книгу не знайдено }
+        '400': { description: Помилка при видаленні }
+
+  /my-books:
+    get:
+      tags: [MyBooks]
+      summary: Отримати список активних, повернених та заброньованих книг користувача
+      description: Повертає три списки: активні видачі, повернуті книги та активні бронювання користувача.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список книг користувача
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  borrowings_active:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Borrowing'
+                  borrowings_returned:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Borrowing'
+                  bookings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Booking'
+        '401':
+          description: Неавторизований
+        '403':
+          description: Заблокований доступ
+        '500':
+          description: Помилка сервера
+
+  /bookings:
+    post:
+      tags: [Bookings]
+      summary: Створити бронювання
+      description: Доступно авторизованим користувачам, які не заблоковані. Книга має бути існуючою, і не може бути вже заброньована цим користувачем.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [book_id]
+              properties:
+                book_id:
+                  type: string
+      responses:
+        '201':
+          description: Бронювання створено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Бронювання створено
+                  booking:
+                    $ref: '#/components/schemas/Booking'
+        '400':
+          description: У вас уже є активна бронь на цю книгу
+        '404':
+          description: Книгу не знайдено
+        '500':
+          description: Помилка сервера
+
+  /bookings/all:
+    get:
+      tags: [Bookings]
+      summary: Перегляд усіх бронювань
+      description: Доступно лише адміну. Перед поверненням списку система автоматично відключає прострочені бронювання.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список бронювань
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingAdmin'
+        '403':
+          description: Заборонено
+        '500':
+          description: Помилка сервера
+
+  /bookings/{userId}:
+    get:
+      tags: [Bookings]
+      summary: Перегляд бронювань користувача
+      description: Доступно лише користувачу або адміну. Автоматично деактивує прострочені бронювання.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: ID користувача
+      responses:
+        '200':
+          description: Список бронювань
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+        '403':
+          description: Доступ заборонено
+        '500':
+          description: Помилка сервера
+
+  /bookings/{id}:
+    delete:
+      tags: [Bookings]
+      summary: Скасувати бронювання
+      description: Доступно лише власнику або адміну. Не можна скасувати неактивне бронювання.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: ID бронювання
+      responses:
+        '200':
+          description: Бронювання скасовано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Бронювання скасовано
+        '404':
+          description: Бронювання не знайдено
+        '403':
+          description: Доступ заборонено
+        '400':
+          description: Це бронювання вже неактивне
+        '500':
+          description: Помилка сервера
+
+  /borrow:
+    post:
+      tags: [Borrowing]
+      summary: Видати книгу користувачу
+      description: Користувач може взяти книгу, якщо вона є в наявності, не перевищено ліміт (3) і вона ще не взята.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [book_id]
+              properties:
+                book_id:
+                  type: string
+      responses:
+        '201':
+          description: Книгу видано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Книгу видано
+                  borrowing:
+                    $ref: '#/components/schemas/Borrowing'
+        '400':
+          description: Помилка валідації
+        '404':
+          description: Книгу не знайдено
+        '500':
+          description: Помилка сервера
+
+  /borrow/return:
+    post:
+      tags: [Borrowing]
+      summary: Повернення книги
+      description: Користувач повертає книгу. Якщо є прострочення, нараховується штраф.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [book_id]
+              properties:
+                book_id:
+                  type: string
+      responses:
+        '200':
+          description: Книгу повернено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Книгу повернено
+                  fine:
+                    type: number
+        '404':
+          description: Активну видачу не знайдено
+        '500':
+          description: Помилка сервера
+
+  /borrow/admin-return:
+    post:
+      tags: [Borrowing]
+      summary: Адміністративне повернення книги
+      description: Адміністратор повертає книгу за іншого користувача.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [book_id, user_id]
+              properties:
+                book_id:
+                  type: string
+                user_id:
+                  type: string
+      responses:
+        '200':
+          description: Книгу повернено адміністратором
+        '400':
+          description: Некоректні дані
+        '404':
+          description: Активну видачу не знайдено
+        '500':
+          description: Помилка сервера
+
+  /borrow/admin:
+    post:
+      tags: [Borrowing]
+      summary: Адміністративна видача книги
+      description: Адміністратор видає книгу іншому користувачу.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [book_id, user_id]
+              properties:
+                book_id:
+                  type: string
+                user_id:
+                  type: string
+      responses:
+        '201':
+          description: Книгу успішно видано адміністратором
+        '400':
+          description: Видача неможлива
+        '404':
+          description: Книгу не знайдено
+        '500':
+          description: Помилка сервера
+
+  /borrow/all:
+    get:
+      tags: [Borrowing]
+      summary: Перегляд усіх видач
+      description: Повертає повний список видач. Доступно тільки адміністратору.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список видач
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BorrowingAdmin'
+        '500':
+          description: Помилка сервера
+
+  /users:
+    get:
+      tags:
+        - Users
+      summary: Отримати всіх користувачів
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список користувачів
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '403':
+          description: Заборонено
+
+  /users/me:
+    get:
+      tags:
+        - Users
+      summary: Отримати дані поточного користувача
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Дані користувача
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Користувача не знайдено
+
+  /users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Отримати користувача за ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Дані користувача
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '403':
+          description: Доступ заборонено
+        '404':
+          description: Користувача не знайдено
+
+    patch:
+      tags:
+        - Users
+      summary: Оновити дані користувача
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: Користувача оновлено
+        '403':
+          description: Доступ заборонено
+        '404':
+          description: Користувача не знайдено
+
+    delete:
+      tags:
+        - Users
+      summary: Видалити користувача
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Користувача видалено
+        '400':
+          description: Неможливо видалити останнього адміністратора
+        '404':
+          description: Користувача не знайдено
+
+  /users/{id}/block:
+    post:
+      tags:
+        - Users
+      summary: Заблокувати користувача
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Користувача заблоковано
+        '404':
+          description: Користувача не знайдено
+
+  /users/{id}/unblock:
+    post:
+      tags:
+        - Users
+      summary: Розблокувати користувача
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Користувача розблоковано
+        '404':
+          description: Користувача не знайдено
+
+  /users/{id}/role:
+    patch:
+      tags:
+        - Users
+      summary: Змінити роль користувача
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum: [reader, moderator, admin]
+      responses:
+        '200':
+          description: Роль оновлено
+        '400':
+          description: Помилка або останній адмін
+        '404':
+          description: Користувача не знайдено
+
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Author:
+      type: object
+      properties:
+        _id: { type: string }
+        name: { type: string, example: Тарас Шевченко }
+        birth_year: { type: integer, example: 1814 }
+        death_year: { type: integer, example: 1861 }
+        biography: { type: string, example: Видатний український поет }
+
+    AuthorInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        birth_year: { type: integer }
+        death_year: { type: integer }
+        biography: { type: string }
+
+    Genre:
+      type: object
+      properties:
+        _id: { type: string }
+        name: { type: string, example: Фентезі }
+        description: { type: string, example: Жанр, що описує вигадані світи }
+
+    GenreInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        description: { type: string }
+
+        Publisher:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+          example: Наукова думка
+        city:
+          type: string
+          example: Київ
+        founded_year:
+          type: integer
+          example: 1922
+
+    PublisherInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        city:
+          type: string
+        founded_year:
+          type: integer
+
+    Book:
+      type: object
+      properties:
+        _id: { type: string }
+        title: { type: string, example: Місто }
+        isbn: { type: string, example: 978-617-12-3456-7 }
+        author_id:
+          $ref: '#/components/schemas/Author'
+        genre_id:
+          $ref: '#/components/schemas/Genre'
+        publisher_id:
+          $ref: '#/components/schemas/Publisher'
+        year: { type: integer, example: 2023 }
+        copies_total: { type: integer, example: 10 }
+        copies_available: { type: integer, example: 8 }
+        description: { type: string, example: Опис книги }
+
+    BookInput:
+      type: object
+      required: [title, author_id, genre_id, publisher_id, year, copies_total]
+      properties:
+        title: { type: string }
+        isbn: { type: string }
+        author_id: { type: string }
+        genre_id: { type: string }
+        publisher_id: { type: string }
+        year: { type: integer }
+        copies_total: { type: integer }
+        description: { type: string }
+
+
+    Borrowing:
+      type: object
+      properties:
+        _id:
+          type: string
+        book_id:
+          $ref: '#/components/schemas/Book'
+        borrow_date:
+          type: string
+          format: date-time
+        due_date:
+          type: string
+          format: date-time
+        return_date:
+          type: string
+          format: date-time
+          nullable: true
+        fine:
+          type: number
+
+    Booking:
+      type: object
+      properties:
+        _id:
+          type: string
+        book_id:
+          $ref: '#/components/schemas/Book'
+        booking_date:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        active:
+          type: boolean
+
+    Booking:
+      type: object
+      properties:
+        _id:
+          type: string
+        book_id:
+          $ref: '#/components/schemas/Book'
+        booking_date:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        active:
+          type: boolean
+
+    BookingAdmin:
+      type: object
+      properties:
+        _id:
+          type: string
+        user_id:
+          type: object
+          properties:
+            _id:
+              type: string
+            full_name:
+              type: string
+            email:
+              type: string
+        book_id:
+          type: object
+          properties:
+            _id:
+              type: string
+            title:
+              type: string
+        booking_date:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        active:
+          type: boolean
+
+    Borrowing:
+      type: object
+      properties:
+        _id:
+          type: string
+        book_id:
+          $ref: '#/components/schemas/Book'
+        borrow_date:
+          type: string
+          format: date-time
+        due_date:
+          type: string
+          format: date-time
+        return_date:
+          type: string
+          format: date-time
+        fine:
+          type: number
+
+    BorrowingAdmin:
+      type: object
+      properties:
+        _id:
+          type: string
+        user_id:
+          type: object
+          properties:
+            _id:
+              type: string
+            full_name:
+              type: string
+            email:
+              type: string
+        book_id:
+          type: object
+          properties:
+            _id:
+              type: string
+            title:
+              type: string
+        borrow_date:
+          type: string
+          format: date-time
+        due_date:
+          type: string
+          format: date-time
+        return_date:
+          type: string
+          format: date-time
+        fine:
+          type: number
+
+
+        User:
+          type: object
+          properties:
+            _id:
+              type: string
+            full_name:
+              type: string
+            email:
+              type: string
+            phone:
+              type: string
+            role:
+              type: string
+            blocked:
+              type: boolean
+
+        UserUpdate:
+          type: object
+          properties:
+            full_name:
+              type: string
+            email:
+              type: string
+            phone:
+              type: string
+        Fine:
+          type: object
+          properties:
+            _id:
+              type: string
+            user_id:
+              type: object
+              properties:
+                _id:
+                  type: string
+                full_name:
+                  type: string
+                email:
+                  type: string
+            amount:
+              type: number
+              example: 50
+            reason:
+              type: string
+              example: Прострочення повернення книги
+            paid:
+              type: boolean
+              example: false
