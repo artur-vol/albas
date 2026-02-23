@@ -946,7 +946,7 @@ components:
         name: { type: string }
         description: { type: string }
 
-        Publisher:
+    Publisher:
       type: object
       properties:
         _id:

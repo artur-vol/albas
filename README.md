@@ -28,3 +28,4 @@ docker compose up --build -d
 ### 4. Доступ до системи
 
 * **Service**: [http://localhost:5001](http://localhost:5001)
+
