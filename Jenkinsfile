@@ -2,9 +2,18 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_USER = "arturvol" 
+        DOCKER_HUB_USER = "arturvol"
         REPO_NAME = "albas"
         FULL_REPO = "${DOCKER_HUB_USER}/${REPO_NAME}"
+
+        BACKEND_TAG = "backend-latest"
+        FRONTEND_TAG = "frontend-latest"
+
+        COMPOSE_FILE = "docker-compose.test.yaml"
+
+        BACKEND_IMAGE = "${FULL_REPO}:${BACKEND_TAG}"
+        FRONTEND_IMAGE = "${FULL_REPO}:${FRONTEND_TAG}"
+
         DOCKER_CREDS = credentials('docker-hub-credentials')
     }
 
@@ -16,50 +25,57 @@ pipeline {
         }
 
         stage('Build & Tag') {
-            steps {
-                script {
-                    dir('backend') {
-                        sh "docker build -t ${FULL_REPO}:backend-latest ."
+            parallel {
+                stage('Backend') {
+                    steps {
+                        dir('backend') { sh "docker build -t ${BACKEND_IMAGE} ." }
                     }
-                    dir('frontend') {
-                        sh "docker build -t ${FULL_REPO}:frontend-latest ."
+                }
+                stage('Frontend') {
+                    steps {
+                        dir('frontend') { sh "docker build -t ${FRONTEND_IMAGE} ." }
                     }
                 }
             }
         }
 
-        stage('Push') {
+        stage('Raise Environment') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USER')]) {
-                    sh "echo ${DOCKER_HUB_PASSWORD} | docker login -u ${DOCKER_HUB_USER} --password-stdin"
-                    sh "docker push ${FULL_REPO}:backend-latest"
-                    sh "docker push ${FULL_REPO}:frontend-latest"
+                sh "docker-compose -f ${COMPOSE_FILE} -p albas-test-${BUILD_NUMBER} up -d"
+                sleep 20
+                sh "docker ps | grep albas-test-${BUILD_NUMBER}"
+            }
+        }
+
+        stage('Tests') {
+            parallel {
+                stage('Test Backend') {
+                    steps {
+                        sh 'curl -f http://localhost:5001/api-docs/ || exit 1'
+                    }
+                }
+                stage('Test Frontend') {
+                    steps {
+                        sh 'curl -f http://localhost:3000 || exit 1'
+                    }
                 }
             }
         }
 
-        stage('Test') {
+        stage('Push to Docker Hub') {
             steps {
-                sh 'docker compose -f docker-compose.test.yaml up --build --abort-on-container-exit'
-            }
-            post {
-                always { sh 'docker compose -f docker-compose.test.yaml down' }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                sh "docker pull ${FULL_REPO}:backend-latest"
-                sh "docker pull ${FULL_REPO}:frontend-latest"
-                sh 'docker compose up -d --force-recreate'
+                sh "echo \$DOCKER_CREDS_PSW | docker login -u \$DOCKER_CREDS_USR --password-stdin"
+                sh "docker push ${BACKEND_IMAGE}"
+                sh "docker push ${FRONTEND_IMAGE}"
+                sh "docker logout"
             }
         }
     }
 
     post {
         always {
-            sh 'docker logout'
-            sh 'docker image prune -f'
+            sh "docker-compose -f ${COMPOSE_FILE} -p albas-test-${BUILD_NUMBER} down -v"
+            sh "docker rmi ${BACKEND_IMAGE} ${FRONTEND_IMAGE} || true"
         }
     }
 }
