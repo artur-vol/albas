@@ -1,3 +1,5 @@
+[![CI Pipeline](https://github.com/artur-vol/albas/actions/workflows/ci.yaml/badge.svg)](https://github.com/artur-vol/albas/actions/workflows/ci.yaml)
+
 # 📚 Library Management System (MERN, MongoDB, Swagger)
 
 ## 🛠️ Інструкція по запуску
