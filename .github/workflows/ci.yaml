@@ -1,14 +1,17 @@
 name: CI Pipeline
 
 on:
-  push:
-    branches: [ "main" ]
+#  push:
+#    branches: [ "main" ]
+  workflow_dispatch:
 
 env:
   DOCKER_HUB_USER: arturvol
   REPO_NAME: albas
   BACKEND_TAG: backend-latest
   FRONTEND_TAG: frontend-latest
+  BACKEND_IMAGE: arturvol/albas:backend-latest
+  FRONTEND_IMAGE: arturvol/albas:frontend-latest
   COMPOSE_FILE: docker-compose.test.yaml
 
 jobs:
