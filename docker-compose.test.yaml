@@ -1,36 +1,24 @@
 services:
   mongo:
     image: mongo:7
-    container_name: mongo
     ports:
-      - "27017:27017"
+      - "27017"
     volumes:
       - ./db/seed/init.js:/docker-entrypoint-initdb.d/init.js:ro
-      - mongo_data:/data/db
     environment:
       MONGO_INITDB_DATABASE: library
-    restart: unless-stopped
 
   backend:
-    image: arturvol/albas:backend-latest
-    container_name: backend
-    ports:
-      - "5001:5000"
+    image: ${BACKEND_IMAGE}
     depends_on:
       - mongo
     environment:
       - MONGO_URI=mongodb://mongo:27017/library
       - PORT=5000
-    restart: unless-stopped
 
   frontend:
-    image: arturvol/albas:frontend-latest
-    container_name: frontend
-    ports:
-      - "3000:80"
+    image: ${FRONTEND_IMAGE}
     depends_on:
       - backend
-    restart: unless-stopped
-
-volumes:
-  mongo_data:
+    ports:
+      - "3000"
