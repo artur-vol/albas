@@ -1,3 +1,58 @@
-#SPDX-License-Identifier: MIT-0
+# ansible/site.yml
 ---
-# tasks file for docker-run-container
+- name: Deploy application from Docker Hub
+  hosts: all
+  become: true
+  vars:
+    docker_hub_user: "arturvol"
+    repo_name: "albas"
+    backend_image: "{{ docker_hub_user }}/{{ repo_name }}:backend-latest"
+    frontend_image: "{{ docker_hub_user }}/{{ repo_name }}:frontend-latest"
+    compose_file: "/opt/albas/docker-compose.yml"
+    app_dir: "/opt/albas"
+
+  tasks:
+    - name: Ensure app directory exists
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Copy docker-compose file to remote
+      ansible.builtin.copy:
+        src: ../docker-compose.yml
+        dest: "{{ compose_file }}"
+        mode: "0644"
+
+    - name: Log in to Docker Hub
+      community.docker.docker_login:
+        username: "{{ docker_hub_user }}"
+        password: "{{ docker_hub_password }}"
+      no_log: true
+
+    - name: Pull backend image
+      community.docker.docker_image:
+        name: "{{ backend_image }}"
+        source: pull
+        force_source: true
+
+    - name: Pull frontend image
+      community.docker.docker_image:
+        name: "{{ frontend_image }}"
+        source: pull
+        force_source: true
+
+    - name: Tear down existing containers
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        state: absent
+
+    - name: Deploy containers
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        state: present
+        pull: never
+
+    - name: Log out from Docker Hub
+      community.docker.docker_login:
+        state: absent

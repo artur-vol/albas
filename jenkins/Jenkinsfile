@@ -64,7 +64,12 @@ pipeline {
         }
         stage('Deploy Docker artifact') {
             steps {
-                dir('ansible') { sh 'ansible-playbook site.yml' }
+                dir('ansible') {
+                    sh """
+                        ansible-playbook site.yml \
+                            -e docker_hub_password=${DOCKER_CREDS_PSW}
+                    """
+                }
             }
         }
     }
