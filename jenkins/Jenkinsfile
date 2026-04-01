@@ -64,10 +64,12 @@ pipeline {
 
         stage('Push to Docker Hub') {
             steps {
-                sh "echo \$DOCKER_CREDS_PSW | docker login -u \$DOCKER_CREDS_USR --password-stdin"
-                sh "docker push ${BACKEND_IMAGE}"
-                sh "docker push ${FRONTEND_IMAGE}"
-                sh "docker logout"
+                sh """
+                    echo "${DOCKER_CREDS_PSW}" | docker login -u "${DOCKER_CREDS_USR}" --password-stdin
+                    docker push ${BACKEND_IMAGE}
+                    docker push ${FRONTEND_IMAGE}
+                    docker logout
+                """
             }
         }
     }
