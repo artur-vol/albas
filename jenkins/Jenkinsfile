@@ -1,29 +1,22 @@
 pipeline {
     agent any
-
     environment {
         DOCKER_HUB_USER = "arturvol"
         REPO_NAME = "albas"
         FULL_REPO = "${DOCKER_HUB_USER}/${REPO_NAME}"
-
         BACKEND_TAG = "backend-latest"
         FRONTEND_TAG = "frontend-latest"
-
         COMPOSE_FILE = "docker-compose.test.yaml"
-
         BACKEND_IMAGE = "${FULL_REPO}:${BACKEND_TAG}"
         FRONTEND_IMAGE = "${FULL_REPO}:${FRONTEND_TAG}"
-
         DOCKER_CREDS = credentials('docker-hub-credentials')
     }
-
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/artur-vol/albas.git'
             }
         }
-
         stage('Build & Tag') {
             parallel {
                 stage('Backend') {
@@ -38,7 +31,6 @@ pipeline {
                 }
             }
         }
-
         stage('Raise Environment') {
             steps {
                 sh "docker-compose -f ${COMPOSE_FILE} -p albas-test-${BUILD_NUMBER} up -d"
@@ -46,7 +38,6 @@ pipeline {
                 sh "docker ps | grep albas-test-${BUILD_NUMBER}"
             }
         }
-
         stage('Tests') {
             parallel {
                 stage('Test Backend') {
@@ -61,7 +52,6 @@ pipeline {
                 }
             }
         }
-
         stage('Push to Docker Hub') {
             steps {
                 sh """
@@ -72,7 +62,12 @@ pipeline {
                 """
             }
         }
-
+        stage('Deploy Docker artifact') {
+            steps {
+                dir('ansible') { sh 'ansible-playbook site.yml' }
+            }
+        }
+    }
     post {
         always {
             sh "docker-compose -f ${COMPOSE_FILE} -p albas-test-${BUILD_NUMBER} down -v"
