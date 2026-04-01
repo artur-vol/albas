@@ -1,5 +1,8 @@
-- hosts: node1
-  become: yes
+# ansible/site.yml
+---
+- name: Deploy application
+  hosts: nodes
+  become: true
   roles:
     - docker-installation
     - docker-run-container
